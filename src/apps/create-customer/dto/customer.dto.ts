@@ -5,11 +5,15 @@ import {
   IsPhoneNumber, 
   IsPostalCode, 
   IsString, 
+  IsStrongPassword, 
   Length, 
-  ValidateNested 
+  ValidateNested, 
+  IsDateString, 
+  IsBoolean
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { AddressDto } from './address.dto';
 
 export class CreateCustomerDto {
   @ApiProperty({ example: 'Juan', description: 'Nombre del cliente' })
@@ -22,13 +26,23 @@ export class CreateCustomerDto {
   @IsNotEmpty()
   lastName: string;
 
+  @ApiProperty({ example: '1990-05-10', description: 'Fecha de nacimiento (YYYY-MM-DD)', required: false })
+  @IsOptional()
+  @IsDateString()
+  birthDate: Date;
+
   @ApiProperty({ example: 'juan.perez@email.com', description: 'Correo electrónico válido' })
   @IsEmail()
   @IsNotEmpty()
   email: string;
 
+  @ApiProperty({ example: 'StrongPassword#123.', description: 'Contraseña segura' })
+  @IsStrongPassword()
+  @IsNotEmpty()
+  password: string;
+
   @ApiProperty({ example: '+525512345678', description: 'Teléfono en formato internacional' })
-  @IsPhoneNumber('MX') 
+  @IsPhoneNumber('MX')
   @IsNotEmpty()
   phoneNumber: string;
 
@@ -36,35 +50,10 @@ export class CreateCustomerDto {
   @ValidateNested()
   @Type(() => AddressDto)
   address: AddressDto;
+
+  //campo para prueba de front
+  @IsBoolean()
+  @IsNotEmpty()
+  subscription: boolean
 }
 
-export class AddressDto {
-  @ApiProperty({ example: 'Ciudad de México' })
-  @IsString()
-  @IsNotEmpty()
-  city: string;
-
-  @ApiProperty({ example: 'CDMX' })
-  @IsString()
-  @IsNotEmpty()
-  state: string;
-
-  @ApiProperty({ example: 'Av. Reforma #12' })
-  @IsString()
-  @IsNotEmpty()
-  line1: string;
-
-  @ApiProperty({ example: 'Interior 4B', required: false })
-  @IsString()
-  @IsOptional()
-  line2?: string;
-
-  @ApiProperty({ example: '06000' })
-  @IsPostalCode('MX')
-  postalCode: string;
-
-  @ApiProperty({ example: 'MX', description: 'Código ISO del país (ej. MX, US, ES)' })
-  @IsString()
-  @Length(2, 2)
-  countryCode: string;
-}

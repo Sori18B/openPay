@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
+import { CreateCustomerModule } from './apps/create-customer/create-customer.module';
+import { LoginModule } from './apps/login/login.module';
+import { AuthModule } from './middlewares/auth/auth.module';
+import { CreateProductsModule } from './apps/create-products/create-products.module';
 import { AppService } from './app.service';
-import { CreateCustomerModule } from './create-customer/create-customer.module';
-import { CreateCustomerModule } from './create-customer/create-customer.module';
+
 
 @Module({
-  imports: [CreateCustomerModule],
-  controllers: [AppController],
+  imports: [CreateCustomerModule, LoginModule, AuthModule, CreateProductsModule],
+  controllers: [],
   providers: [AppService],
 })
 export class AppModule {}
