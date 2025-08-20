@@ -1,22 +1,15 @@
 import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/customer.dto';
 import { PrismaService } from 'src/config/prisma/prisma.service';
+import { OpenPayService } from 'src/utils/open-pay/open-pay.service';
 import * as bcrypt from 'bcrypt';
-
-const Openpay = require('openpay');
 
 @Injectable()
 export class CreateCustomerService {
-  
-  private openpay: any;
-
-  constructor(private prisma: PrismaService) {
-    this.openpay = new Openpay(
-      process.env.OPENPAY_MERCHANT_ID, 
-      process.env.OPENPAY_PRIVATE_KEY, 
-      false 
-    );
-  }
+  constructor(
+    private prisma: PrismaService, 
+    private openpayService: OpenPayService 
+  ) {}
 
   async createCustomer(data: CreateCustomerDto) {
     const existingUser = await this.prisma.users.findUnique({
@@ -34,11 +27,14 @@ export class CreateCustomerService {
       ]);
 
       return {
-        message: "Customer created successfully"
+        message: "Cliente creado correctamente",
+        openpayCustomerId: openpayCustomer.id,
+        userId: dbUser.userId
       };
     } catch (error) {
       console.error('Error creating customer:', error);
       
+      // Rollback si falló OpenPay pero no la DB
       if (error.message?.includes('OpenPay') && !error.message?.includes('DB')) {
         try {
           await this.rollbackUserCreation(data.email);
@@ -65,9 +61,10 @@ export class CreateCustomerService {
       last_name: data.lastName,
       email: data.email,
       phone_number: data.phoneNumber,
+      requires_account: false,
       address: {
         city: data.address.city,
-        state: data.address.state,
+        state: data.address.state, 
         line1: data.address.line1,
         line2: data.address.line2,
         postal_code: data.address.postalCode,
@@ -75,15 +72,13 @@ export class CreateCustomerService {
       },
     };
 
-    return new Promise((resolve, reject) => {
-      this.openpay.customers.create(customerPayload, (error, body) => {
-        if (error) {
-          console.error('OpenPay Error:', error);
-          return reject(new Error(`OpenPay Error: ${error.description || error.message}`));
-        }
-        resolve(body);
-      });
-    });
+    try {
+      const response = await this.openpayService.createCustomer(customerPayload);
+      return response; 
+    } catch (error) {
+      console.error('OpenPay Error:', error.response?.data || error.message);
+      throw new Error(`OpenPay Error: ${error.response?.data?.description || error.message}`);
+    }
   }
 
   async createUserDB(data: CreateCustomerDto) {
@@ -107,11 +102,11 @@ export class CreateCustomerService {
               line1: data.address.line1,
               line2: data.address.line2,
               postalCode: data.address.postalCode,
-              countryCode: data.address.countryCode,
+              countryCode: data.address.countryCode
             },
           },
         },
-        include: { addresses: true },
+        include: { addresses: true }, 
       });
 
       return { 
@@ -137,7 +132,7 @@ export class CreateCustomerService {
       });
 
       if (!foundUser) {
-        return { message: 'User not found' };
+        return { message: 'Usuario no encontrado!' };
       }
 
       return foundUser;
