@@ -65,8 +65,8 @@ export class CreateCustomerService {
       address: {
         city: data.address.city,
         state: data.address.state, 
-        line1: data.address.line1,
-        line2: data.address.line2,
+        line1: data.address.street,
+        line2: data.address.cologne,
         postal_code: data.address.postalCode,
         country_code: data.address.countryCode,
       },
@@ -94,13 +94,12 @@ export class CreateCustomerService {
           password: hashedPassword,
           phoneNumber: data.phoneNumber,
           birthDate: new Date(data.birthDate),
-          subscription: data.subscription,
           addresses: {
             create: {
               city: data.address.city,
               state: data.address.state,
-              line1: data.address.line1,
-              line2: data.address.line2,
+              street: data.address.street,
+              cologne: data.address.cologne,
               postalCode: data.address.postalCode,
               countryCode: data.address.countryCode
             },

@@ -50,10 +50,5 @@ export class CreateCustomerDto {
   @ValidateNested()
   @Type(() => AddressDto)
   address: AddressDto;
-
-  //campo para prueba de front
-  @IsBoolean()
-  @IsNotEmpty()
-  subscription: boolean
 }
 

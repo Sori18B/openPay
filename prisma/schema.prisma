@@ -26,7 +26,6 @@ model Users {
   addDate      DateTime  @default(now())
   updateDate   DateTime  @updatedAt
   phoneNumber  String
-  subscription Boolean
 
   addresses    Address[]   // relación 1:N (un usuario tiene varias direcciones)
 }
@@ -35,8 +34,8 @@ model Address {
   id          Int     @id @default(autoincrement())
   city        String
   state       String
-  line1       String
-  line2       String?
+  street      String
+  cologne     String
   postalCode  String
   countryCode String   @db.VarChar(2) // <-- corregido para Postgres
 

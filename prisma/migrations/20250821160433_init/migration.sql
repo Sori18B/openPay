@@ -12,7 +12,6 @@ CREATE TABLE "public"."Users" (
     "addDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updateDate" TIMESTAMP(3) NOT NULL,
     "phoneNumber" TEXT NOT NULL,
-    "subscription" BOOLEAN NOT NULL,
 
     CONSTRAINT "Users_pkey" PRIMARY KEY ("id")
 );
@@ -22,8 +21,8 @@ CREATE TABLE "public"."Address" (
     "id" SERIAL NOT NULL,
     "city" TEXT NOT NULL,
     "state" TEXT NOT NULL,
-    "line1" TEXT NOT NULL,
-    "line2" TEXT,
+    "street" TEXT NOT NULL,
+    "cologne" TEXT NOT NULL,
     "postalCode" TEXT NOT NULL,
     "countryCode" VARCHAR(2) NOT NULL,
     "userId" INTEGER NOT NULL,

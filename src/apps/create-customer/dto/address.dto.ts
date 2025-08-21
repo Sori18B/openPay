@@ -21,12 +21,12 @@ export class AddressDto {
   @ApiProperty({ example: 'Av. Reforma #12' })
   @IsString()
   @IsNotEmpty()
-  line1: string;
+  street: string;
 
   @ApiProperty({ example: 'Interior 4B', required: false })
   @IsString()
   @IsOptional()
-  line2?: string;
+  cologne: string;
 
   @ApiProperty({ example: '72495' })
   @IsPostalCode('any')
