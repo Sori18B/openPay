@@ -43,3 +43,14 @@ model Address {
   userId      Int
   user        Users   @relation(fields: [userId], references: [id])
 }
+
+
+model Product {
+  id Int @id @default(autoincrement())
+  name String
+  description String
+  quantity Int
+  price Decimal
+  addDate DateTime @default(now())
+  updateDate DateTime @updatedAt
+}
