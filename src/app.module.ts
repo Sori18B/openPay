@@ -5,7 +5,6 @@ import { AuthModule } from './middlewares/auth/auth.module';
 import { CreateProductsModule } from './apps/create-products/create-products.module';
 import { AppService } from './app.service';
 
-
 @Module({
   imports: [CreateCustomerModule, LoginModule, AuthModule, CreateProductsModule],
   controllers: [],
