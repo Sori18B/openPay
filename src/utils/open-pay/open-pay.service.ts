@@ -1,12 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../config/prisma/prisma.service';
+import { CreatePlanDto } from './dto/plan.dto';
 
 @Injectable()
 export class OpenPayService {
     private client: AxiosInstance;
 
-    constructor(private configService: ConfigService) {
+    constructor(
+        private configService: ConfigService,
+        private prismaService: PrismaService
+    ) {
         const merchantId = this.configService.get<string>('OPENPAY_MERCHANT_ID', '');
         const privateKey = this.configService.get<string>('OPENPAY_PRIVATE_KEY', '');
         const isSandbox = this.configService.get<string>('OPENPAY_ENV') === 'sandbox';
@@ -63,6 +68,58 @@ export class OpenPayService {
             return response.data;
         } catch (error) {
             throw new Error(`OpenPay Error: ${error.response?.data?.description || error.message}`);
+        }
+    }
+
+    // ========== MÉTODO PARA CREAR PLANES ==========
+
+    // Crear plan en OpenPay y guardar en base de datos
+    async createPlan(createPlanDto: CreatePlanDto) {
+        try {
+            // 1. Preparar datos para OpenPay
+            const planPayload = {
+                name: createPlanDto.name,
+                amount: createPlanDto.amount,
+                currency: createPlanDto.currency || 'MXN',
+                repeat_every: createPlanDto.repeatEvery,
+                repeat_unit: createPlanDto.repeatUnit,
+                retry_times: createPlanDto.retryTimes || 3,
+                status_after_retry: createPlanDto.statusAfterRetry || 'cancelled',
+                trial_days: createPlanDto.trialDays || 0
+            };
+
+            // 2. Crear plan en OpenPay
+            const openPayResponse = await this.client.post('/plans', planPayload);
+            const openPayPlan = openPayResponse.data;
+
+            // 3. Guardar plan en base de datos
+            const savedPlan = await this.prismaService.plan.create({
+                data: {
+                    openpayId: openPayPlan.id,
+                    creationDate: new Date(openPayPlan.creation_date),
+                    name: openPayPlan.name,
+                    amount: parseFloat(openPayPlan.amount),
+                    currency: openPayPlan.currency,
+                    repeatEvery: openPayPlan.repeat_every,
+                    repeatUnit: openPayPlan.repeat_unit,
+                    retryTimes: openPayPlan.retry_times,
+                    status: openPayPlan.status,
+                    statusAfterRetry: openPayPlan.status_after_retry,
+                    trialDays: openPayPlan.trial_days
+                }
+            });
+
+            return {
+                success: true,
+                message: 'Plan creado exitosamente',
+                openPayData: openPayPlan,
+                planId: savedPlan.id,
+                plan: savedPlan
+            };
+
+        } catch (error) {
+            console.error('Error creando plan:', error);
+            throw new Error(`Error creando plan: ${error.response?.data?.description || error.message}`);
         }
     }
 }

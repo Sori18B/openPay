@@ -94,6 +94,7 @@ export class CreateCustomerService {
           password: hashedPassword,
           phoneNumber: data.phoneNumber,
           birthDate: new Date(data.birthDate),
+          subscription: false, // Inicialmente sin suscripción
           addresses: {
             create: {
               city: data.address.city,
