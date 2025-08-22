@@ -110,7 +110,7 @@ export class OpenPayService {
       const openPayResponse = await this.client.post('/plans', planPayload);
       const openPayPlan = openPayResponse.data;
 
-      // 3. Guardar plan en base de datos
+      // 3. Guardar plan en base de datos con el status deseado por el usuario
       const savedPlan = await this.prismaService.plan.create({
         data: {
           openpayId: openPayPlan.id,
@@ -121,7 +121,7 @@ export class OpenPayService {
           repeatEvery: openPayPlan.repeat_every,
           repeatUnit: openPayPlan.repeat_unit,
           retryTimes: openPayPlan.retry_times,
-          status: openPayPlan.status,
+          status: createPlanDto.status || 'active',
           statusAfterRetry: openPayPlan.status_after_retry,
           trialDays: openPayPlan.trial_days,
         },
@@ -139,6 +139,39 @@ export class OpenPayService {
       throw new Error(
         `Error creando plan: ${error.response?.data?.description || error.message}`,
       );
+    }
+  }
+
+  // ========== MÉTODOS PARA LISTAR PLANES ==========
+
+  // Obtener planes activos para el frontend (formato OpenPay)
+  async getActivePlans() {
+    try {
+      // Obtener planes activos de la base de datos
+      const dbPlans = await this.prismaService.plan.findMany({
+        where: { status: 'active' },
+        orderBy: { creationDate: 'desc' }, // Ordenar por fecha de creación descendente
+      });
+
+      // Formatear respuesta idéntica a la documentación de OpenPay
+      const formattedPlans = dbPlans.map((plan) => ({
+        name: plan.name,
+        status: plan.status,
+        amount: Number(plan.amount), // Convertir Decimal a number
+        currency: plan.currency,
+        id: plan.openpayId, // Este es el ID que usa OpenPay
+        creation_date: plan.creationDate.toISOString(), // Formato ISO para fechas
+        repeat_every: plan.repeatEvery,
+        repeat_unit: plan.repeatUnit,
+        retry_times: plan.retryTimes,
+        status_after_retry: plan.statusAfterRetry,
+        trial_days: plan.trialDays,
+      }));
+
+      return formattedPlans;
+    } catch (error) {
+      console.error('Error obteniendo planes activos:', error);
+      throw new Error(`Error obteniendo planes activos: ${error.message}`);
     }
   }
 }
