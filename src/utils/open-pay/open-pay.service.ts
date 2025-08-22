@@ -90,7 +90,6 @@ export class OpenPayService {
   }
 
   // ========== MÉTODO PARA CREAR PLANES ==========
-
   // Crear plan en OpenPay y guardar en base de datos
   async createPlan(createPlanDto: CreatePlanDto) {
     try {
@@ -143,8 +142,7 @@ export class OpenPayService {
   }
 
   // ========== MÉTODOS PARA LISTAR PLANES ==========
-
-  // Obtener planes activos para el frontend (formato OpenPay)
+  // Obtener planes activos para el frontend
   async getActivePlans() {
     try {
       // Obtener planes activos de la base de datos
@@ -153,14 +151,13 @@ export class OpenPayService {
         orderBy: { creationDate: 'desc' }, // Ordenar por fecha de creación descendente
       });
 
-      // Formatear respuesta idéntica a la documentación de OpenPay
       const formattedPlans = dbPlans.map((plan) => ({
         name: plan.name,
         status: plan.status,
         amount: Number(plan.amount), // Convertir Decimal a number
         currency: plan.currency,
         idopenpay: plan.openpayId, // Este es el ID que usa OpenPay
-        creation_date: plan.creationDate.toISOString(), // Formato ISO para fechas
+        creation_date: plan.creationDate.toISOString(),
         repeat_every: plan.repeatEvery,
         repeat_unit: plan.repeatUnit,
         retry_times: plan.retryTimes,
