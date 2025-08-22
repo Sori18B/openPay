@@ -65,4 +65,16 @@ export class OpenPayService {
             throw new Error(`OpenPay Error: ${error.response?.data?.description || error.message}`);
         }
     }
+
+    // ---------------------- Metodos para crear tarjetas ---------------------
+
+    //Método para crear tarjeta
+    async createCustomerCard(customerId: string, cardData: any) {
+    try {
+        const response = await this.client.post(`/customers/${customerId}/cards`, cardData);
+        return response.data;
+    } catch (error) {
+        throw new Error(`OpenPay Error: ${error.response?.data?.description || error.message}`);
+    }
+    }
 }

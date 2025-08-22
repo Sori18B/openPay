@@ -14,31 +14,67 @@ datasource db {
 }
 
 model Users {
-  id           Int       @id @default(autoincrement())
-  roleId       Int
-  name         String
-  lastName     String
-  birthDate    DateTime?
-  email        String    @unique
-  password     String
-  groupId      Int?
-  isRefresh    Boolean   @default(false)
-  addDate      DateTime  @default(now())
-  updateDate   DateTime  @updatedAt
-  phoneNumber  String
+  id               Int       @id @default(autoincrement())
+  roleId           Int
+  name             String
+  lastName         String
+  birthDate        DateTime?
+  email            String    @unique
+  password         String
+  groupId          Int?
+  isRefresh        Boolean   @default(false)
+  addDate          DateTime  @default(now())
+  updateDate       DateTime  @updatedAt
+  phoneNumber      String
+  openPayCustomerId String   @unique
 
-  addresses    Address[]   // relación 1:N (un usuario tiene varias direcciones)
+  addresses        Address[]
+  cards            Card[]
 }
 
 model Address {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   city        String
   state       String
   street      String
   cologne     String
   postalCode  String
-  countryCode String   @db.VarChar(2) // <-- corregido para Postgres
+  countryCode String   @db.VarChar(2)
 
   userId      Int
-  user        Users   @relation(fields: [userId], references: [id])
+  user        Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cards       Card[]
+}
+
+model Card {
+  id              String   @id
+  type            String
+  brand           String
+  cardNumber      String
+  holderName      String
+  expirationYear  String
+  expirationMonth String
+  allowsCharges   Boolean
+  allowsPayouts   Boolean
+  creationDate    DateTime
+  bankName        String?
+  bankCode        String?
+  pointsCard      Boolean
+
+  // Relación con Address
+  addressId       Int
+  address         Address  @relation(fields: [addressId], references: [id], onDelete: Cascade)
+
+  // Relación con Users (usando ID numérico en lugar de openPayCustomerId)
+  userId          Int?
+  user            Users?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Campos de dirección para OpenPay (pueden ser opcionales si ya tienes la relación con Address)
+  line1           String?
+  line2           String?
+  line3           String?
+  city            String?
+  state           String?
+  postalCode      String?
+  countryCode     String?
 }
