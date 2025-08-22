@@ -8,6 +8,6 @@ import { PrismaModule } from '../../config/prisma/prisma.module';
   controllers: [OpenPayController],
   providers: [OpenPayService],
   exports: [OpenPayService],
-  imports: [ConfigModule, PrismaModule]
+  imports: [ConfigModule, PrismaModule],
 })
 export class OpenPayModule {}

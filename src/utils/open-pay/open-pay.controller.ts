@@ -4,10 +4,10 @@ import { CreatePlanDto } from './dto/plan.dto';
 
 @Controller('open-pay')
 export class OpenPayController {
-    constructor(private readonly openPayService: OpenPayService) {}
+  constructor(private readonly openPayService: OpenPayService) {}
 
-    @Post('plans')
-    async createPlan(@Body() createPlanDto: CreatePlanDto) {
-        return await this.openPayService.createPlan(createPlanDto);
-    }
+  @Post('plans')
+  async createPlan(@Body() createPlanDto: CreatePlanDto) {
+    return await this.openPayService.createPlan(createPlanDto);
+  }
 }
