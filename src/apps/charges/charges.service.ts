@@ -17,22 +17,9 @@ export class ChargesService {
     private readonly httpService: HttpService,
     private readonly prisma: PrismaService,
   ) {
-    //this.merchantId = this.configService.get('OPENPAY_MERCHANT_ID');
-    //this.privateKey = this.configService.get('OPENPAY_PRIVATE_KEY');
-    //this.openpayUrl = this.configService.get('OPENPAY_URL');
-  }
-  private getEnvVariable(key: string): string {
-    const value = this.configService.get<string>(key);
-    if (!value) {
-      throw new Error(`Environment variable ${key} is not defined`);
-    }
-    return value;
-  }
-  onModuleInit() {
-    // Inicializar las variables de entorno con verificación
-    this.merchantId = this.getEnvVariable('OPENPAY_MERCHANT_ID');
-    this.privateKey = this.getEnvVariable('OPENPAY_PRIVATE_KEY');
-    this.openpayUrl = this.getEnvVariable('OPENPAY_URL');
+    const merchantId = this.configService.get<string>('OPENPAY_MERCHANT_ID', '');
+    const privateKey = this.configService.get <string>('OPENPAY_PRIVATE_KEY', '');
+    const openpayUrl = this.configService.get<string>('OPENPAY_URL');
   }
 
   private getAuth() {
@@ -45,7 +32,7 @@ export class ChargesService {
   // Crear cargo con tarjeta
   async createCardCharge(dto: CreateCardChargeDto) {
     // Obtener el cliente de nuestra base de datos
-    const customer = await this.prisma.customer.findUnique({
+    const customer = await this.prisma.users.findUnique({
       where: { id: dto.customerId },
     });
 
@@ -71,7 +58,7 @@ export class ChargesService {
       );
 
       // Guardar transacción en base de datos
-      return await this.prisma.transaction.create({
+      return await this.prisma.Transaction.create({
         data: {
           openpayId: response.data.id,
           amount: response.data.amount,

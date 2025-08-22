@@ -2,7 +2,6 @@ import { IsDecimal, IsInt, IsNotEmpty, IsString, MaxLength, Min, MinLength } fro
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ProductDto {
-
     
     @IsString()
     @IsNotEmpty()

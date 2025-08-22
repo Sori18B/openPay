@@ -1,11 +1,13 @@
 import { IsNumber, IsString, IsOptional, IsNotEmpty } from 'class-validator';
 
 export class CreateCardChargeDto {
-  @IsNumber()
-  amount: number;
-
   @IsString()
-  description: string;
+  @IsNotEmpty()
+  source_id: string; // Token de tarjeta generado por Openpay JS
+
+  @IsNumber()
+  @IsNotEmpty()
+  amount: number;
 
   @IsString()
   @IsOptional()
@@ -13,17 +15,17 @@ export class CreateCardChargeDto {
 
   @IsString()
   @IsNotEmpty()
-  customerId: string; 
+  description: string;
 
   @IsString()
-  @IsNotEmpty()
-  source_id: string; // Token de tarjeta generado por Openpay JS
+  @IsOptional()
+  order_id?: string;
 
   @IsString()
   @IsOptional()
   device_session_id?: string; // Sesión de dispositivo
 
-  @IsString()
-  @IsOptional()
-  order_id?: string; 
+  @IsNumber()
+  @IsNotEmpty()
+  customerId: number;
 }
