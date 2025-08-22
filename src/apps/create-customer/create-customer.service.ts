@@ -28,9 +28,7 @@ export class CreateCustomerService {
       const dbUser = await this.createUserDB(data, openpayCustomer.id);
 
       return {
-        message: "Cliente creado correctamente",
-        openpayCustomerId: openpayCustomer.id,
-        userId: dbUser.userId
+        message: "Cliente creado correctamente"
       };
     } catch (error) {
       console.error('Error creating customer:', error);
