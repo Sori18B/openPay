@@ -159,7 +159,7 @@ export class OpenPayService {
         status: plan.status,
         amount: Number(plan.amount), // Convertir Decimal a number
         currency: plan.currency,
-        id: plan.openpayId, // Este es el ID que usa OpenPay
+        idopenpay: plan.openpayId, // Este es el ID que usa OpenPay
         creation_date: plan.creationDate.toISOString(), // Formato ISO para fechas
         repeat_every: plan.repeatEvery,
         repeat_unit: plan.repeatUnit,
