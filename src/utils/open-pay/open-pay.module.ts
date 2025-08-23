@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { OpenPayController } from './open-pay.controller';
 import { OpenPayService } from './open-pay.service';
 import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from '../../config/prisma/prisma.module';
 
 @Module({
   controllers: [OpenPayController],
   providers: [OpenPayService],
   exports: [OpenPayService],
-  imports: [ConfigModule]
+  imports: [ConfigModule, PrismaModule],
 })
 export class OpenPayModule {}
