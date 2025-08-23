@@ -21,15 +21,14 @@ export class CreateCustomerService {
     }
 
     try {
-      const [openpayCustomer, dbUser] = await Promise.all([
-        this.createCustomerOpenPay(data),
-        this.createUserDB(data)
-      ]);
+      // 1️⃣ Crear cliente en OpenPay
+      const openpayCustomer = await this.createCustomerOpenPay(data);
+
+      // 2️⃣ Crear usuario en DB con el ID de OpenPay
+      const dbUser = await this.createUserDB(data, openpayCustomer.id);
 
       return {
-        message: "Cliente creado correctamente",
-        openpayCustomerId: openpayCustomer.id,
-        userId: dbUser.userId
+        message: "Cliente creado correctamente"
       };
     } catch (error) {
       console.error('Error creating customer:', error);
@@ -81,7 +80,7 @@ export class CreateCustomerService {
     }
   }
 
-  async createUserDB(data: CreateCustomerDto) {
+  async createUserDB(data: CreateCustomerDto, openPayCustomerId: string) {
     const hashedPassword = await bcrypt.hash(data.password, 12);
 
     try {
@@ -105,6 +104,7 @@ export class CreateCustomerService {
               countryCode: data.address.countryCode
             },
           },
+          openPayCustomerId: openPayCustomerId,
         },
         include: { addresses: true }, 
       });
@@ -121,21 +121,16 @@ export class CreateCustomerService {
 
   async getUserById(user_id: number) {
     try {
-      const foundUser = await this.prisma.users.findUnique({
+      return await this.prisma.users.findUnique({
         where: { id: user_id },
         select: {
           id: true,
           email: true,
           name: true,
           lastName: true,
+          openPayCustomerId: true
         }
       });
-
-      if (!foundUser) {
-        return { message: 'Usuario no encontrado!' };
-      }
-
-      return foundUser;
     } catch (error) {
       console.error('Error getting user:', error);
       throw new InternalServerErrorException('Error retrieving user');
