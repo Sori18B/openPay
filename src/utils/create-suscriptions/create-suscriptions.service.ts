@@ -100,6 +100,11 @@ export class CreateSuscriptionsService {
         subscriptionPayload.source_id = createSubscriptionDto.source_id;
       } else if (createSubscriptionDto.card) {
         subscriptionPayload.card = createSubscriptionDto.card;
+        // Agregar device_session_id si está presente en la tarjeta para prevención de fraudes
+        if (createSubscriptionDto.card.device_session_id) {
+          subscriptionPayload.device_session_id =
+            createSubscriptionDto.card.device_session_id;
+        }
       }
 
       // 6. Crear suscripción en OpenPay
@@ -211,6 +216,38 @@ export class CreateSuscriptionsService {
       throw new Error(
         `Error cancelando suscripción: ${error.response?.data?.description || error.message}`,
       );
+    }
+  }
+
+  // ========== OBTENER SUSCRIPCIONES DE USUARIO ==========
+  async getUserSubscriptions(userId: number) {
+    try {
+      const user = await this.prismaService.users.findUnique({
+        where: { id: userId },
+        include: {
+          subscriptionData: {
+            include: {
+              plan: true,
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+
+      return {
+        success: true,
+        hasActiveSubscription: user.subscription,
+        subscription: user.subscriptionData || null,
+      };
+    } catch (error) {
+      console.error('Error obteniendo suscripciones del usuario:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(`Error obteniendo suscripciones: ${error.message}`);
     }
   }
 }

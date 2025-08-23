@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Get,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { CreateSuscriptionsService } from './create-suscriptions.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 
@@ -17,6 +25,11 @@ export class CreateSuscriptionsController {
       createSubscriptionDto,
       customerId,
     );
+  }
+
+  @Get('user/:userId')
+  async getUserSubscriptions(@Param('userId', ParseIntPipe) userId: number) {
+    return this.createSuscriptionsService.getUserSubscriptions(userId);
   }
 
   @Delete(':subscriptionId')

@@ -13,6 +13,7 @@ CREATE TABLE "public"."Users" (
     "updateDate" TIMESTAMP(3) NOT NULL,
     "phoneNumber" TEXT NOT NULL,
     "subscription" BOOLEAN NOT NULL,
+    "openPayCustomerId" TEXT NOT NULL,
 
     CONSTRAINT "Users_pkey" PRIMARY KEY ("id")
 );
@@ -72,8 +73,39 @@ CREATE TABLE "public"."Subscription" (
     CONSTRAINT "Subscription_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "public"."Card" (
+    "id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "brand" TEXT NOT NULL,
+    "cardNumber" TEXT NOT NULL,
+    "holderName" TEXT NOT NULL,
+    "expirationYear" TEXT NOT NULL,
+    "expirationMonth" TEXT NOT NULL,
+    "allowsCharges" BOOLEAN NOT NULL,
+    "allowsPayouts" BOOLEAN NOT NULL,
+    "creationDate" TIMESTAMP(3) NOT NULL,
+    "bankName" TEXT,
+    "bankCode" TEXT,
+    "pointsCard" BOOLEAN NOT NULL,
+    "addressId" INTEGER NOT NULL,
+    "userId" INTEGER,
+    "line1" TEXT,
+    "line2" TEXT,
+    "line3" TEXT,
+    "city" TEXT,
+    "state" TEXT,
+    "postalCode" TEXT,
+    "countryCode" TEXT,
+
+    CONSTRAINT "Card_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Users_email_key" ON "public"."Users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Users_openPayCustomerId_key" ON "public"."Users"("openPayCustomerId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Plan_openpayId_key" ON "public"."Plan"("openpayId");
@@ -82,10 +114,16 @@ CREATE UNIQUE INDEX "Plan_openpayId_key" ON "public"."Plan"("openpayId");
 CREATE UNIQUE INDEX "Subscription_userId_key" ON "public"."Subscription"("userId");
 
 -- AddForeignKey
-ALTER TABLE "public"."Address" ADD CONSTRAINT "Address_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Address" ADD CONSTRAINT "Address_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."Subscription" ADD CONSTRAINT "Subscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."Subscription" ADD CONSTRAINT "Subscription_planId_fkey" FOREIGN KEY ("planId") REFERENCES "public"."Plan"("openpayId") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."Card" ADD CONSTRAINT "Card_addressId_fkey" FOREIGN KEY ("addressId") REFERENCES "public"."Address"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."Card" ADD CONSTRAINT "Card_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."Users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
