@@ -31,7 +31,7 @@ model Users {
 
   addresses         Address[]
   cards             Card[]
-  subscriptionData  Subscription?
+  subscriptions     Subscription[] // Cambiar de subscriptionData a subscriptions para relación 1:N
 }
 
 model Address {
@@ -80,7 +80,7 @@ model Subscription {
   status                String   // Estado de la suscripción
   customerId            String   // ID del cliente en OpenPay
   card                  Json?    // Objeto tarjeta
-  userId                Int      @unique
+  userId                Int
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 

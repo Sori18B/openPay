@@ -16,14 +16,12 @@ export class CreateSuscriptionsController {
     private readonly createSuscriptionsService: CreateSuscriptionsService,
   ) {}
 
-  @Post(':customerId')
+  @Post()
   async createSubscription(
-    @Param('customerId') customerId: string,
     @Body() createSubscriptionDto: CreateSubscriptionDto,
   ) {
     return this.createSuscriptionsService.createSubscription(
       createSubscriptionDto,
-      customerId,
     );
   }
 
