@@ -12,7 +12,7 @@ export class OpenPayService {
         const isSandbox = this.configService.get<string>('OPENPAY_ENV') === 'sandbox';
 
         if (!merchantId || !privateKey) {
-            throw new Error('Openpay credentials are missing');
+            throw new Error('Openpay credentials are missing'); 
         }
 
         const baseURL = isSandbox

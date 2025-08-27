@@ -21,10 +21,7 @@ export class CreateCustomerService {
     }
 
     try {
-      // 1️⃣ Crear cliente en OpenPay
       const openpayCustomer = await this.createCustomerOpenPay(data);
-
-      // 2️⃣ Crear usuario en DB con el ID de OpenPay
       const dbUser = await this.createUserDB(data, openpayCustomer.id);
 
       return {
@@ -117,6 +114,7 @@ export class CreateCustomerService {
       throw new Error(`DB Error: ${error.message}`);
     }
   }
+
 
   async getUserById(user_id: number) {
     try {

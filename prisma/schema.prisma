@@ -27,7 +27,7 @@ model Users {
   updateDate       DateTime  @updatedAt
   phoneNumber      String
   openPayCustomerId String   @unique
-
+ 
   addresses        Address[]
   cards            Card[]
 }

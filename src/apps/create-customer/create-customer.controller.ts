@@ -8,6 +8,7 @@ export class CreateCustomerController {
 
   @Post('/openPayClient')
   async createopenPayClient(@Body() dto: CreateCustomerDto) {
+    console.log(dto);
     return await this.createCustomerService.createCustomer(dto)
   }
 
