@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  ConflictException,
+} from '@nestjs/common';
 import { CreateCustomerDto } from './dto/customer.dto';
 import { PrismaService } from 'src/config/prisma/prisma.service';
 import { OpenPayService } from 'src/utils/open-pay/open-pay.service';
@@ -7,13 +11,13 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class CreateCustomerService {
   constructor(
-    private prisma: PrismaService, 
-    private openpayService: OpenPayService 
+    private prisma: PrismaService,
+    private openpayService: OpenPayService,
   ) {}
 
   async createCustomer(data: CreateCustomerDto) {
     const existingUser = await this.prisma.users.findUnique({
-      where: { email: data.email }
+      where: { email: data.email },
     });
 
     if (existingUser) {
@@ -21,22 +25,20 @@ export class CreateCustomerService {
     }
 
     try {
-      // 1️⃣ Crear cliente en OpenPay
       const openpayCustomer = await this.createCustomerOpenPay(data);
-
-      // 2️⃣ Crear usuario en DB con el ID de OpenPay
       const dbUser = await this.createUserDB(data, openpayCustomer.id);
 
       return {
-        message: "Cliente creado correctamente",
-        openpayCustomerId: openpayCustomer.id,
-        userId: dbUser.userId
+        message: 'Cliente creado correctamente',
       };
     } catch (error) {
       console.error('Error creating customer:', error);
-      
+
       // Rollback si falló OpenPay pero no la DB
-      if (error.message?.includes('OpenPay') && !error.message?.includes('DB')) {
+      if (
+        error.message?.includes('OpenPay') &&
+        !error.message?.includes('DB')
+      ) {
         try {
           await this.rollbackUserCreation(data.email);
         } catch (rollbackError) {
@@ -45,14 +47,14 @@ export class CreateCustomerService {
       }
 
       throw new InternalServerErrorException(
-        error.message || 'Error creating customer'
+        error.message || 'Error creating customer',
       );
     }
   }
 
   private async rollbackUserCreation(email: string) {
     await this.prisma.users.delete({
-      where: { email }
+      where: { email },
     });
   }
 
@@ -65,7 +67,7 @@ export class CreateCustomerService {
       requires_account: false,
       address: {
         city: data.address.city,
-        state: data.address.state, 
+        state: data.address.state,
         line1: data.address.street,
         line2: data.address.cologne,
         postal_code: data.address.postalCode,
@@ -74,11 +76,14 @@ export class CreateCustomerService {
     };
 
     try {
-      const response = await this.openpayService.createCustomer(customerPayload);
-      return response; 
+      const response =
+        await this.openpayService.createCustomer(customerPayload);
+      return response;
     } catch (error) {
       console.error('OpenPay Error:', error.response?.data || error.message);
-      throw new Error(`OpenPay Error: ${error.response?.data?.description || error.message}`);
+      throw new Error(
+        `OpenPay Error: ${error.response?.data?.description || error.message}`,
+      );
     }
   }
 
@@ -102,17 +107,17 @@ export class CreateCustomerService {
               street: data.address.street,
               cologne: data.address.cologne,
               postalCode: data.address.postalCode,
-              countryCode: data.address.countryCode
+              countryCode: data.address.countryCode,
             },
           },
           openPayCustomerId: openPayCustomerId,
         },
-        include: { addresses: true }, 
+        include: { addresses: true },
       });
 
-      return { 
-        message: "User created successfully", 
-        userId: user.id 
+      return {
+        message: 'User created successfully',
+        userId: user.id,
       };
     } catch (error) {
       console.error('Database Error:', error);
@@ -129,12 +134,40 @@ export class CreateCustomerService {
           email: true,
           name: true,
           lastName: true,
-          openPayCustomerId: true
-        }
+          openPayCustomerId: true,
+        },
       });
     } catch (error) {
       console.error('Error getting user:', error);
       throw new InternalServerErrorException('Error retrieving user');
+    }
+  }
+
+  // Método para obtener las direcciones del usuario
+  async getUserAddresses(user_id: number) {
+    try {
+      const addresses = await this.prisma.address.findMany({
+        where: { userId: user_id },
+        orderBy: { id: 'asc' }, // La primera dirección será la principal
+        select: {
+          id: true,
+          city: true,
+          state: true,
+          street: true,
+          cologne: true,
+          postalCode: true,
+          countryCode: true,
+        },
+      });
+
+      return {
+        success: true,
+        addresses,
+        primaryAddress: addresses[0] || null, // La primera dirección como principal
+      };
+    } catch (error) {
+      console.error('Error getting user addresses:', error);
+      throw new InternalServerErrorException('Error retrieving user addresses');
     }
   }
 }
