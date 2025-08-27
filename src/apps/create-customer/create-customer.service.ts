@@ -107,10 +107,11 @@ export class CreateCustomerService {
               street: data.address.street,
               cologne: data.address.cologne,
               postalCode: data.address.postalCode,
-              countryCode: data.address.countryCode,
+              countryCode: data.address.countryCode || 'MX',
             },
           },
           openPayCustomerId: openPayCustomerId,
+          subscription: false,
         },
         include: { addresses: true },
       });

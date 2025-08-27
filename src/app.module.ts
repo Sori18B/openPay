@@ -6,6 +6,7 @@ import { CreateProductsModule } from './apps/create-products/create-products.mod
 import { OpenPayModule } from './utils/open-pay/open-pay.module';
 import { CreateSuscriptionsModule } from './utils/create-suscriptions/create-suscriptions.module';
 import { AppService } from './app.service';
+import { CreateCardsModule } from './apps/create-cards/create-cards.module';
 
 @Module({
   imports: [
@@ -15,10 +16,11 @@ import { AppService } from './app.service';
     CreateProductsModule,
     OpenPayModule,
     CreateSuscriptionsModule,
+    CreateCardsModule,
   ],
   controllers: [],
   providers: [AppService],
 })
 export class AppModule {}
 
-// llamen a dios 
+// llamen a dios

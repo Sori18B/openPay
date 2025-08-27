@@ -13,6 +13,7 @@ CREATE TABLE "public"."Users" (
     "updateDate" TIMESTAMP(3) NOT NULL,
     "phoneNumber" TEXT NOT NULL,
     "openPayCustomerId" TEXT NOT NULL,
+    "subscription" BOOLEAN NOT NULL,
 
     CONSTRAINT "Users_pkey" PRIMARY KEY ("id")
 );
