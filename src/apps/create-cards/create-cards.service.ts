@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CardObjectDto } from './dto/card-dto';
 import { PrismaService } from 'src/config/prisma/prisma.service';
 import { OpenPayService } from 'src/utils/open-pay/open-pay.service';
@@ -7,23 +11,25 @@ import { CreateCustomerService } from '../create-customer/create-customer.servic
 @Injectable()
 export class CreateCardsService {
   constructor(
-    private prismaService: PrismaService, 
+    private prismaService: PrismaService,
     private openpayservice: OpenPayService,
-    private customerService: CreateCustomerService
-  ){}
+    private customerService: CreateCustomerService,
+  ) {}
 
   // Obtener el customerId de OpenPay a partir del user_id
   async getCustomerId(user_id: number): Promise<string> {
     const user = await this.customerService.getUserById(user_id);
-    
+
     if (!user) {
       throw new InternalServerErrorException('Usuario no encontrado');
     }
-    
+
     if (!user.openPayCustomerId) {
-      throw new InternalServerErrorException('El usuario no tiene un OpenPay customerId');
+      throw new InternalServerErrorException(
+        'El usuario no tiene un OpenPay customerId',
+      );
     }
-    
+
     return user.openPayCustomerId;
   }
 
@@ -31,7 +37,7 @@ export class CreateCardsService {
   async validateUserAddress(user_id: number, addressId: number): Promise<void> {
     const address = await this.prismaService.address.findUnique({
       where: { id: addressId },
-      select: { userId: true }
+      select: { userId: true },
     });
 
     if (!address) {
@@ -39,7 +45,9 @@ export class CreateCardsService {
     }
 
     if (address.userId !== user_id) {
-      throw new InternalServerErrorException('La dirección no pertenece al usuario');
+      throw new InternalServerErrorException(
+        'La dirección no pertenece al usuario',
+      );
     }
   }
 
@@ -53,16 +61,19 @@ export class CreateCardsService {
       expiration_year: data.expiration_year,
       expiration_month: data.expiration_month,
       cvv2: data.cvv2,
-      device_session_id: data.device_session_id
+      device_session_id: data.device_session_id,
     };
 
     try {
-      const response = await this.openpayservice.createCustomerCard(customerId, cardData);
+      const response = await this.openpayservice.createCustomerCard(
+        customerId,
+        cardData,
+      );
       return response;
     } catch (error) {
       console.error('OpenPay Error:', error.response?.data || error.message);
       throw new InternalServerErrorException(
-        `OpenPay Error: ${error.response?.data?.description || error.message}`
+        `OpenPay Error: ${error.response?.data?.description || error.message}`,
       );
     }
   }
@@ -73,12 +84,14 @@ export class CreateCardsService {
       const user = await this.customerService.getUserById(user_id);
 
       if (!user || !user.openPayCustomerId) {
-        throw new InternalServerErrorException('El usuario no tiene OpenPay customerId');
+        throw new InternalServerErrorException(
+          'El usuario no tiene OpenPay customerId',
+        );
       }
 
       // Obtener la dirección para usar sus datos
       const address = await this.prismaService.address.findUnique({
-        where: { id: addressId }
+        where: { id: addressId },
       });
 
       if (!address) {
@@ -100,15 +113,15 @@ export class CreateCardsService {
           bankName: openpayCardData.bank_name || null,
           bankCode: openpayCardData.bank_code || null,
           pointsCard: openpayCardData.points || false,
-          
+
           // Relaciones usando connect
           address: {
-            connect: { id: addressId }
+            connect: { id: addressId },
           },
           user: {
-            connect: { id: user_id }
+            connect: { id: user_id },
           },
-          
+
           // Campos de dirección (usar datos de la dirección relacionada)
           line1: address.street,
           line2: address.cologne || '',
@@ -117,7 +130,7 @@ export class CreateCardsService {
           state: address.state,
           postalCode: address.postalCode,
           countryCode: address.countryCode,
-        }
+        },
       });
 
       return card;
@@ -141,14 +154,72 @@ export class CreateCardsService {
 
       return {
         message: 'Tarjeta creada correctamente',
-        card: cardDB
+        card: cardDB,
       };
     } catch (error) {
       console.error('Error creando tarjeta:', error);
-      if (error instanceof NotFoundException || error instanceof InternalServerErrorException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof InternalServerErrorException
+      ) {
         throw error;
       }
-      throw new InternalServerErrorException(error.message || 'Error creando tarjeta');
+      throw new InternalServerErrorException(
+        error.message || 'Error creando tarjeta',
+      );
+    }
+  }
+
+  // ========== OBTENER TARJETAS DE USUARIO ==========
+  async getUserCards(user_id: number) {
+    try {
+      const user = await this.customerService.getUserById(user_id);
+
+      if (!user) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+
+      const cards = await this.prismaService.card.findMany({
+        where: { userId: user_id },
+        include: {
+          address: {
+            select: {
+              city: true,
+              state: true,
+              street: true,
+              cologne: true,
+              postalCode: true,
+              countryCode: true,
+            },
+          },
+        },
+        orderBy: { creationDate: 'desc' },
+      });
+
+      return {
+        success: true,
+        cards: cards.map((card) => ({
+          id: card.id,
+          type: card.type,
+          brand: card.brand,
+          cardNumber: card.cardNumber,
+          holderName: card.holderName,
+          expirationYear: card.expirationYear,
+          expirationMonth: card.expirationMonth,
+          allowsCharges: card.allowsCharges,
+          creationDate: card.creationDate,
+          bankName: card.bankName,
+          address: card.address,
+        })),
+      };
+    } catch (error) {
+      console.error('Error obteniendo tarjetas del usuario:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        `Error obteniendo tarjetas: ${error.message}`,
+      );
     }
   }
 }

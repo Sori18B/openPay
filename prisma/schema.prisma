@@ -14,22 +14,24 @@ datasource db {
 }
 
 model Users {
-  id               Int       @id @default(autoincrement())
-  roleId           Int
-  name             String
-  lastName         String
-  birthDate        DateTime?
-  email            String    @unique
-  password         String
-  groupId          Int?
-  isRefresh        Boolean   @default(false)
-  addDate          DateTime  @default(now())
-  updateDate       DateTime  @updatedAt
-  phoneNumber      String
-  openPayCustomerId String   @unique
+  id                Int       @id @default(autoincrement())
+  roleId            Int
+  name              String
+  lastName          String
+  birthDate         DateTime?
+  email             String    @unique
+  password          String
+  groupId           Int?
+  isRefresh         Boolean   @default(false)
+  addDate           DateTime  @default(now())
+  updateDate        DateTime  @updatedAt
+  phoneNumber       String
+  subscription      Boolean
+  openPayCustomerId String    @unique
 
-  addresses        Address[]
-  cards            Card[]
+  addresses         Address[]
+  cards             Card[]
+  subscriptions     Subscription[] // Cambiar de subscriptionData a subscriptions para relación 1:N
 }
 
 model Address {
@@ -44,6 +46,46 @@ model Address {
   userId      Int
   user        Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
   cards       Card[]
+}
+
+model Plan {
+  id              String   @id @default(uuid()) // Identificador único interno
+  openpayId       String   @unique // ID del plan en OpenPay
+  creationDate    DateTime // Fecha y hora en que se creó el Plan en OpenPay
+  name            String   // Nombre del Plan
+  amount          Decimal  @db.Decimal(10,2) // Monto con hasta 2 dígitos decimales
+  currency        String   @default("MXN") // Moneda usada en la operación
+  repeatEvery     Int      // Número de unidades tiempo entre cobros
+  repeatUnit      String   // Frecuencia de cobro (week, month, year)
+  retryTimes      Int      // Número de reintentos de cobro
+  status          String   // Estatus del Plan (active, deleted)
+  statusAfterRetry String  // Status después de agotar intentos (unpaid, cancelled)
+  trialDays       Int      @default(0) // Número de días de prueba por defecto
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  subscriptions   Subscription[] // relación 1:N (un plan puede tener varias suscripciones)
+}
+
+model Subscription {
+  id                    String   @id @default(uuid()) // Identificador único de la suscripción
+  openpayId             String   // ID de la suscripción en OpenPay
+  creationDate          DateTime // Fecha de creación de la suscripción
+  cancelAtPeriodEnd     Boolean  // Si se cancela al terminar el periodo
+  chargeDate            DateTime // Fecha del próximo cobro
+  currentPeriodNumber   Int      // Periodo actual a cobrar
+  periodEndDate         DateTime // Fecha en la que termina el periodo actual
+  trialEndDate          DateTime? // Fecha en la que termina el periodo de prueba
+  planId                String   // ID del plan en OpenPay
+  status                String   // Estado de la suscripción
+  customerId            String   // ID del cliente en OpenPay
+  card                  Json?    // Objeto tarjeta
+  userId                Int
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user                  Users    @relation(fields: [userId], references: [id])
+  plan                  Plan     @relation(fields: [planId], references: [openpayId])
 }
 
 model Card {
