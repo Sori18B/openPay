@@ -1,11 +1,17 @@
-import { IsNumber, IsString, IsOptional, IsNotEmpty } from 'class-validator';
+import {
+  IsNumber,
+  IsString,
+  IsOptional,
+  IsNotEmpty,
+  Min,
+  IsDateString,
+} from 'class-validator';
 
 export class CreateBankChargeDto {
   @IsNumber()
+  @Min(1)
+  @IsNotEmpty()
   amount: number;
-
-  @IsString()
-  description: string;
 
   @IsString()
   @IsOptional()
@@ -13,13 +19,17 @@ export class CreateBankChargeDto {
 
   @IsString()
   @IsNotEmpty()
-  customerId: string; 
+  description: string;
 
   @IsString()
   @IsOptional()
-  order_id?: string; 
+  order_id?: string;
 
-  @IsString()
+  @IsDateString()
   @IsOptional()
-  due_date?: string; // Fecha de vencimiento (YYYY-MM-DD)
+  due_date?: string; // Formato YYYY-MM-DD
+
+  @IsNumber()
+  @IsNotEmpty()
+  customerId: number;
 }

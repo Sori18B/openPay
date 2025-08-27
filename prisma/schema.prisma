@@ -14,36 +14,37 @@ datasource db {
 }
 
 model Users {
-  id               Int       @id @default(autoincrement())
-  roleId           Int
-  name             String
-  lastName         String
-  birthDate        DateTime?
-  email            String    @unique
-  password         String
-  groupId          Int?
-  isRefresh        Boolean   @default(false)
-  addDate          DateTime  @default(now())
-  updateDate       DateTime  @updatedAt
-  phoneNumber      String
-  openPayCustomerId String   @unique
+  id                Int       @id @default(autoincrement())
+  roleId            Int
+  name              String
+  lastName          String
+  birthDate         DateTime?
+  email             String    @unique
+  password          String
+  groupId           Int?
+  isRefresh         Boolean   @default(false)
+  addDate           DateTime  @default(now())
+  updateDate        DateTime  @updatedAt
+  phoneNumber       String
+  openPayCustomerId String    @unique
 
-  addresses        Address[]
-  cards            Card[]
+  addresses    Address[]
+  cards        Card[]
+  transactions Transaction[]
 }
 
 model Address {
-  id          Int      @id @default(autoincrement())
+  id          Int    @id @default(autoincrement())
   city        String
   state       String
   street      String
   cologne     String
   postalCode  String
-  countryCode String   @db.VarChar(2)
+  countryCode String @db.VarChar(2)
 
-  userId      Int
-  user        Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cards       Card[]
+  userId Int
+  user   Users  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cards  Card[]
 }
 
 model Card {
@@ -62,40 +63,53 @@ model Card {
   pointsCard      Boolean
 
   // Relación con Address
-  addressId       Int
-  address         Address  @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  addressId Int
+  address   Address @relation(fields: [addressId], references: [id], onDelete: Cascade)
 
   // Relación con Users (usando ID numérico en lugar de openPayCustomerId)
-  userId          Int?
-  user            Users?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId Int?
+  user   Users? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Campos de dirección para OpenPay (pueden ser opcionales si ya tienes la relación con Address)
-  line1           String?
-  line2           String?
-  line3           String?
-  city            String?
-  state           String?
-  postalCode      String?
-  countryCode     String?
+  line1       String?
+  line2       String?
+  line3       String?
+  city        String?
+  state       String?
+  postalCode  String?
+  countryCode String?
 }
 
-
 model Product {
-  id Int @id @default(autoincrement())
-  name String
+  id          Int      @id @default(autoincrement())
+  name        String
   description String
-  quantity Int
-  price Decimal
-  addDate DateTime @default(now())
-  updateDate DateTime @updatedAt
+  quantity    Int
+  price       Decimal
+  addDate     DateTime @default(now())
+  updateDate  DateTime @updatedAt
 }
 
 model Transaction {
-   id Int @id @default(autoincrement())
-   source_id String
-   amount Int
-   currency String
-   order_id String
-   device_session_id String
-   customer_id Int
+  id                Int    @id @default(autoincrement())
+  openpayId         String    @unique // ID de transacción en Openpay
+  source_id         String? // Token de la tarjeta
+  amount            Decimal 
+  currency          String    @default("MXN")
+  description       String
+  order_id          String?
+  device_session_id String?
+  status            String // pending, completed, failed.
+  method            String // card, bank_account, etc.
+  clabe             String? // Para transferencias bancarias
+  dueDate           DateTime? // Para transferencias bancarias
+  metadata          Json? // Respuesta completa de Openpay
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relación con el cliente
+  customerId Int
+  customer   Users @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("transactions") //Decorador de prisma que ayuda a darle nombre de la tabla a la base de datos
 }
