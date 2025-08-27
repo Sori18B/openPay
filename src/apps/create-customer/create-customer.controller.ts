@@ -1,19 +1,30 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { CreateCustomerService } from './create-customer.service';
 import { CreateCustomerDto } from './dto/customer.dto';
 
 @Controller('create-customer')
 export class CreateCustomerController {
-    constructor(private createCustomerService: CreateCustomerService){}
+  constructor(private createCustomerService: CreateCustomerService) {}
 
   @Post('/openPayClient')
   async createopenPayClient(@Body() dto: CreateCustomerDto) {
-    console.log(dto);
-    return await this.createCustomerService.createCustomer(dto)
+    return await this.createCustomerService.createCustomer(dto);
   }
 
   @Get('/:id')
-  async getUserById(@Param('id') user_id : number){
-    return await this.createCustomerService.getUserById(user_id)
+  async getUserById(@Param('id', ParseIntPipe) user_id: number) {
+    return await this.createCustomerService.getUserById(user_id);
+  }
+
+  @Get('/:id/addresses')
+  async getUserAddresses(@Param('id', ParseIntPipe) user_id: number) {
+    return await this.createCustomerService.getUserAddresses(user_id);
   }
 }
