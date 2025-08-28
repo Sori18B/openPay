@@ -111,6 +111,7 @@ export class CreateCustomerService {
             },
           },
           openPayCustomerId: openPayCustomerId,
+          subscription: false,
         },
         include: { addresses: true },
       });

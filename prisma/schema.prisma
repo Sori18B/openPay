@@ -14,25 +14,6 @@ datasource db {
 }
 
 model Users {
-<<<<<<< HEAD
-  id                Int       @id @default(autoincrement())
-  roleId            Int
-  name              String
-  lastName          String
-  birthDate         DateTime?
-  email             String    @unique
-  password          String
-  groupId           Int?
-  isRefresh         Boolean   @default(false)
-  addDate           DateTime  @default(now())
-  updateDate        DateTime  @updatedAt
-  phoneNumber       String
-  openPayCustomerId String    @unique
-
-  addresses    Address[]
-  cards        Card[]
-  transactions Transaction[]
-=======
   id               Int       @id @default(autoincrement())
   roleId           Int
   name             String
@@ -46,12 +27,11 @@ model Users {
   updateDate       DateTime  @updatedAt
   phoneNumber      String
   openPayCustomerId String   @unique
+  subscription Boolean 
  
   addresses        Address[]
   cards            Card[]
-
   subscriptions     Subscription[] // Cambiar de subscriptionData a subscriptions para relación 1:N
->>>>>>> b6c6203dbe7d645e43944824bec727d68a1fab97
 }
 
 model Address {
@@ -132,7 +112,6 @@ model Card {
   user   Users? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Campos de dirección para OpenPay (pueden ser opcionales si ya tienes la relación con Address)
-<<<<<<< HEAD
   line1       String?
   line2       String?
   line3       String?
@@ -147,40 +126,40 @@ model Product {
   name        String
   description String
   quantity    Int
+  imageUrl    String
   price       Decimal
+  currency    String @default("MXN")
+  category    String?
+  isActive    Boolean
   addDate     DateTime @default(now())
   updateDate  DateTime @updatedAt
+
+  charges Charge[]
 }
 
-model Transaction {
-  id                Int    @id @default(autoincrement())
+model Charge {
+  id                String    @id @default(uuid())
   openpayId         String    @unique // ID de transacción en Openpay
+  productId Int
   source_id         String? // Token de la tarjeta
-  amount            Decimal 
+  amount            Decimal   @db.Decimal(10,2)
   currency          String    @default("MXN")
-  description       String
-  order_id          String?
-  device_session_id String?
-  status            String // pending, completed, failed.
   method            String // card, bank_account, etc.
-  clabe             String? // Para transferencias bancarias
-  dueDate           DateTime? // Para transferencias bancarias
-  metadata          Json? // Respuesta completa de Openpay
+  status            String // pending, completed, failed.
+  customerId        String?  // ID del customer en OpenPay
+  customerName      String
+  customerEmail     String
+  description       String?
+  orderId           String?
+  metadata          Json?
+  creationDate      DateTime
+  operationDate     DateTime?
+  errorMessage      String?
+  authorizationCode String?
+
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  // Relación con el cliente
-  customerId Int
-  customer   Users @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
 
-  @@map("transactions") //Decorador de prisma que ayuda a darle nombre de la tabla a la base de datos
-=======
-  line1           String?
-  line2           String?
-  line3           String?
-  city            String?
-  state           String?
-  postalCode      String?
-  countryCode     String?
->>>>>>> b6c6203dbe7d645e43944824bec727d68a1fab97
 }

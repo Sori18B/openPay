@@ -8,12 +8,6 @@ import { CreatePlanDto } from './dto/plan.dto';
 export class OpenPayService {
   private client: AxiosInstance;
 
-<<<<<<< HEAD
-    constructor(private configService: ConfigService) {
-        const merchantId = this.configService.get<string>('OPENPAY_MERCHANT_ID', '');
-        const privateKey = this.configService.get<string>('OPENPAY_PRIVATE_KEY', '');
-        const isSandbox = this.configService.get<string>('URL_BASE');
-=======
   constructor(
     private configService: ConfigService,
     private prismaService: PrismaService,
@@ -26,10 +20,7 @@ export class OpenPayService {
       'OPENPAY_PRIVATE_KEY',
       '',
     );
-    const isSandbox =
-      this.configService.get<string>('OPENPAY_ENV') === 'sandbox';
->>>>>>> b6c6203dbe7d645e43944824bec727d68a1fab97
-
+    const isSandbox = this.configService.get<string>('URL_BASE');
     if (!merchantId || !privateKey) {
       throw new Error('Openpay credentials are missing');
     }
@@ -45,37 +36,8 @@ export class OpenPayService {
     });
   }
 
-<<<<<<< HEAD
-    // Método para actualizar customer
-    async updateCustomer(customerId: string, customerData: any) {
-        try {
-            const response = await this.client.put(`/customers/${customerId}`, customerData);
-            return response.data;
-        } catch (error) {
-            throw new Error(`OpenPay Error: ${error.response?.data?.description || error.message}`);
-        }
-    }
-
-    // Método para eliminar customer
-    async deleteCustomer(customerId: string) {
-        try {
-            const response = await this.client.delete(`/customers/${customerId}`);
-            return response.data;
-        } catch (error) {
-            throw new Error(`OpenPay Error: ${error.response?.data?.description || error.message}`);
-        }
-
-     
-    }
-
-    // ---------------------- Metodos para crear tarjetas ---------------------
-
-    //Método para crear tarjeta
-    async createCustomerCard(customerId: string, cardData: any) {
-=======
   // Método público para crear customers
   async createCustomer(customerData: any) {
->>>>>>> b6c6203dbe7d645e43944824bec727d68a1fab97
     try {
       const response = await this.client.post('/customers', customerData);
       return response.data;
