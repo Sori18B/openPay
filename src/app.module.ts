@@ -16,6 +16,7 @@ import { ProductsModule } from './apps/products/products.module';
     OpenPayModule,
     CreateSuscriptionsModule,
     ProductsModule,
+    CreateCardsModule,
   ],
   controllers: [],
   providers: [AppService],
