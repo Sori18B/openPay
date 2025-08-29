@@ -6,6 +6,7 @@ import { OpenPayModule } from './utils/open-pay/open-pay.module';
 import { CreateSuscriptionsModule } from './utils/create-suscriptions/create-suscriptions.module';
 import { AppService } from './app.service';
 import { ProductsModule } from './apps/products/products.module';
+import { CreateCardsModule } from './apps/create-cards/create-cards.module';
 
 @Module({
   imports: [

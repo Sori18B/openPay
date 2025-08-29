@@ -8,6 +8,7 @@ import {
   MinLength,
   IsOptional,
   IsBoolean,
+  IsNumber,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -37,7 +38,7 @@ export class ProductDto {
   @ApiProperty({ example: 10 })
   quantity: number;
 
-  @IsDecimal({ decimal_digits: '2' })
+  @IsNumber()
   @ApiProperty({ example: 100.0 })
   @IsNotEmpty()
   @Min(0.5, { message: 'El precuo debe de ser mayor a 0' })

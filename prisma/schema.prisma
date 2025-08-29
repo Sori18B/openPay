@@ -140,21 +140,20 @@ model Product {
 model Charge {
   id                String    @id @default(uuid())
   openpayId         String    @unique // ID de transacción en Openpay
-  productId Int
+  productId         Int
   source_id         String? // Token de la tarjeta
   amount            Decimal   @db.Decimal(10,2)
   currency          String    @default("MXN")
-  method            String // card, bank_account, etc.
   status            String // pending, completed, failed.
   customerId        String?  // ID del customer en OpenPay
-  customerName      String
-  customerEmail     String
+  customerName      String?
+  customerEmail     String?
   description       String?
-  orderId           String?
   metadata          Json?
   creationDate      DateTime
   operationDate     DateTime?
   errorMessage      String?
+  errorCode       String?   // Código de error de Openpay
   authorizationCode String?
 
   createdAt         DateTime  @default(now())
