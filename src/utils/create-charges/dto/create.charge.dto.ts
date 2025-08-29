@@ -1,4 +1,3 @@
-// create-payment.dto.ts
 import {
   IsString,
   IsNotEmpty,
@@ -6,6 +5,7 @@ import {
   IsOptional,
   MinLength,
   MaxLength,
+  IsNumber,
 } from 'class-validator';
 
 export class CreateChargeDto {
@@ -13,7 +13,7 @@ export class CreateChargeDto {
   @IsNotEmpty({ message: 'El token de la tarjeta es requerido' })
   cardToken: string; // Token de la tarjeta generado por Openpay.js en el frontend
 
-  @IsString()
+  @IsNumber()
   @IsNotEmpty({ message: 'El ID del producto es requerido' })
   productId: number; // ID del producto a comprar
 
