@@ -20,6 +20,7 @@ export class CreateSuscriptionsController {
   async createSubscription(
     @Body() createSubscriptionDto: CreateSubscriptionDto,
   ) {
+    console.log('Controlador:', createSubscriptionDto);
     return this.createSuscriptionsService.createSubscription(
       createSubscriptionDto,
     );

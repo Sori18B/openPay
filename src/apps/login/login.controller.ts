@@ -4,10 +4,11 @@ import { LoginService } from './login.service';
 
 @Controller('login')
 export class LoginController {
-  constructor (private readonly loginService: LoginService) {}
+  constructor(private readonly loginService: LoginService) {}
 
   @Post()
   async verifyLogin(@Body() loginDto: LoginDto) {
+    console.log('Login attempt:', loginDto);
     return await this.loginService.verifyLogin(loginDto);
   }
 }

@@ -61,7 +61,8 @@ export class CreateCardsService {
       expiration_year: data.expiration_year,
       expiration_month: data.expiration_month,
       cvv2: data.cvv2,
-      device_session_id: data.device_session_id,
+      device_session_id:
+        data.device_session_id || 'kR1MiQhz2otdIuUlQkbEyitIqVMiI16f',
     };
 
     try {

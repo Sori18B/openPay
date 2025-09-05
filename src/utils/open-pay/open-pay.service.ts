@@ -16,10 +16,12 @@ export class OpenPayService {
       'OPENPAY_MERCHANT_ID',
       '',
     );
+    console.log('Merchant ID:', merchantId);
     const privateKey = this.configService.get<string>(
       'OPENPAY_PRIVATE_KEY',
       '',
     );
+    console.log('Private Key:', privateKey);
     const isSandbox = this.configService.get<string>('URL_BASE');
     if (!merchantId || !privateKey) {
       throw new Error('Openpay credentials are missing');

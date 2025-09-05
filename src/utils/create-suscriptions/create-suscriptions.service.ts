@@ -99,8 +99,18 @@ export class CreateSuscriptionsService {
 
       // Agregar source_id o card según lo que se haya enviado
       if (createSubscriptionDto.source_id) {
+        console.log(
+          'Usando source_id para la suscripción',
+          createSubscriptionDto.source_id,
+        );
         subscriptionPayload.source_id = createSubscriptionDto.source_id;
       } else if (createSubscriptionDto.card) {
+        console.log(
+          'Usando card para la suscripción' +
+            (createSubscriptionDto.card.device_session_id
+              ? ' con device_session_id'
+              : '(Sin device_session_id)'),
+        );
         subscriptionPayload.card = createSubscriptionDto.card;
         // Agregar device_session_id si está presente en la tarjeta para prevención de fraudes
         if (createSubscriptionDto.card.device_session_id) {
