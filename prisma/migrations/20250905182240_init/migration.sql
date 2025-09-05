@@ -24,7 +24,7 @@ CREATE TABLE "public"."Address" (
     "city" TEXT NOT NULL,
     "state" TEXT NOT NULL,
     "street" TEXT NOT NULL,
-    "cologne" TEXT NOT NULL,
+    "neighborhood" TEXT NOT NULL,
     "postalCode" TEXT NOT NULL,
     "countryCode" VARCHAR(2) NOT NULL,
     "userId" INTEGER NOT NULL,
@@ -145,6 +145,9 @@ CREATE TABLE "public"."Charge" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Users_email_key" ON "public"."Users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Users_phoneNumber_key" ON "public"."Users"("phoneNumber");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Users_openPayCustomerId_key" ON "public"."Users"("openPayCustomerId");

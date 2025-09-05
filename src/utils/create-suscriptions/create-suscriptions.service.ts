@@ -3,14 +3,13 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { ConfigService } from '@nestjs/config';
-import { AxiosInstance } from 'axios';
 import { PrismaService } from 'src/config/prisma/prisma.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 
 @Injectable()
-export class CreateSuscriptionsService {
+export class CreateSubscriptionsService {
   private client: AxiosInstance;
 
   constructor(
@@ -29,7 +28,7 @@ export class CreateSuscriptionsService {
       this.configService.get<string>('OPENPAY_ENV') === 'sandbox';
 
     if (!merchantId || !privateKey) {
-      throw new Error('Openpay credentials are missing');
+      throw new Error('OpenPay credentials are missing');
     }
 
     const baseURL = isSandbox
@@ -43,90 +42,54 @@ export class CreateSuscriptionsService {
     });
   }
 
-  // ========== CREAR SUSCRIPCIÓN ==========
-  async createSubscription(createSubscriptionDto: CreateSubscriptionDto) {
+  // ========== CREAR SUSCRIPCIÓN CON SOURCE_ID ==========
+  async createSubscription(dto: CreateSubscriptionDto) {
     try {
       // 1. Verificar que el usuario existe
       const user = await this.prismaService.users.findUnique({
-        where: { id: createSubscriptionDto.userId },
+        where: { id: dto.userId },
         include: {
           subscriptions: {
-            where: { status: { not: 'cancelled' } }, // Solo obtener suscripciones activas
+            where: { status: { not: 'cancelled' } },
             orderBy: { createdAt: 'desc' },
           },
         },
       });
+      if (!user) throw new NotFoundException('Usuario no encontrado');
 
-      if (!user) {
-        throw new NotFoundException('Usuario no encontrado');
-      }
-
-      // 2. Obtener el customerId del usuario
-      const customerId = user.openPayCustomerId;
-
-      // 3. Verificar que el usuario no tenga una suscripción activa
+      // 2. Verificar que el usuario no tenga suscripción activa
       if (user.subscriptions && user.subscriptions.length > 0) {
         throw new ConflictException(
           'El usuario ya tiene una suscripción activa',
         );
       }
 
-      // 4. Verificar que el plan existe
+      // 3. Verificar que el plan existe
       const plan = await this.prismaService.plan.findFirst({
-        where: { openpayId: createSubscriptionDto.plan_id },
+        where: { openpayId: dto.plan_id },
       });
+      if (!plan) throw new NotFoundException('Plan no encontrado');
 
-      if (!plan) {
-        throw new NotFoundException('Plan no encontrado');
+      // 4. Validar que se envíe source_id
+      if (!dto.source_id) {
+        throw new Error('Debe enviar source_id');
       }
 
-      // 5. Validar que se envíe source_id o card (uno de los dos es requerido)
-      if (!createSubscriptionDto.source_id && !createSubscriptionDto.card) {
-        throw new Error('Debe enviar source_id o card');
-      }
-
-      if (createSubscriptionDto.source_id && createSubscriptionDto.card) {
-        throw new Error('No puede enviar source_id y card al mismo tiempo');
-      }
-
-      // 6. Preparar datos para OpenPay
-      const subscriptionPayload: any = {
-        plan_id: createSubscriptionDto.plan_id,
-        ...(createSubscriptionDto.trial_end_date && {
-          trial_end_date: createSubscriptionDto.trial_end_date,
-        }),
+      // 5. Preparar payload para OpenPay
+      const payload: any = {
+        plan_id: dto.plan_id,
+        source_id: dto.source_id,
+        ...(dto.trial_end_date && { trial_end_date: dto.trial_end_date }),
       };
 
-      // Agregar source_id o card según lo que se haya enviado
-      if (createSubscriptionDto.source_id) {
-        console.log(
-          'Usando source_id para la suscripción',
-          createSubscriptionDto.source_id,
-        );
-        subscriptionPayload.source_id = createSubscriptionDto.source_id;
-      } else if (createSubscriptionDto.card) {
-        console.log(
-          'Usando card para la suscripción' +
-            (createSubscriptionDto.card.device_session_id
-              ? ' con device_session_id'
-              : '(Sin device_session_id)'),
-        );
-        subscriptionPayload.card = createSubscriptionDto.card;
-        // Agregar device_session_id si está presente en la tarjeta para prevención de fraudes
-        if (createSubscriptionDto.card.device_session_id) {
-          subscriptionPayload.device_session_id =
-            createSubscriptionDto.card.device_session_id;
-        }
-      }
-
-      // 7. Crear suscripción en OpenPay
+      // 6. Crear suscripción en OpenPay
       const openPayResponse = await this.client.post(
-        `/customers/${customerId}/subscriptions`,
-        subscriptionPayload,
+        `/customers/${user.openPayCustomerId}/subscriptions`,
+        payload,
       );
       const openPaySubscription = openPayResponse.data;
 
-      // 8. Guardar suscripción en base de datos
+      // 7. Guardar suscripción en BD
       const savedSubscription = await this.prismaService.subscription.create({
         data: {
           openpayId: openPaySubscription.id,
@@ -142,13 +105,13 @@ export class CreateSuscriptionsService {
           status: openPaySubscription.status,
           customerId: openPaySubscription.customer_id,
           card: openPaySubscription.card,
-          userId: createSubscriptionDto.userId,
+          userId: dto.userId,
         },
       });
 
-      // 9. Actualizar campo subscription del usuario a true
+      // 8. Marcar al usuario con suscripción activa
       await this.prismaService.users.update({
-        where: { id: createSubscriptionDto.userId },
+        where: { id: dto.userId },
         data: { subscription: true },
       });
 
@@ -158,7 +121,7 @@ export class CreateSuscriptionsService {
         subscription: savedSubscription,
         openPayData: openPaySubscription,
       };
-    } catch (error) {
+    } catch (error: any) {
       if (
         error instanceof NotFoundException ||
         error instanceof ConflictException
@@ -174,44 +137,32 @@ export class CreateSuscriptionsService {
   // ========== CANCELAR SUSCRIPCIÓN ==========
   async cancelSubscription(subscriptionId: string) {
     try {
-      // 1. Buscar suscripción en base de datos
       const subscription = await this.prismaService.subscription.findUnique({
         where: { id: subscriptionId },
         include: { user: true },
       });
-
-      if (!subscription) {
+      if (!subscription)
         throw new NotFoundException('Suscripción no encontrada');
-      }
 
       try {
-        // 2. Intentar cancelar en OpenPay
         await this.client.delete(
           `/customers/${subscription.customerId}/subscriptions/${subscription.openpayId}`,
         );
       } catch (openPayError) {
-        // Si la suscripción no existe en OpenPay (404), continúa para limpiar la DB
-        if (openPayError.response?.status !== 404) {
-          throw openPayError;
-        }
+        if (openPayError.response?.status !== 404) throw openPayError;
       }
 
-      // 3. Actualizar estado en base de datos
       const updatedSubscription = await this.prismaService.subscription.update({
         where: { id: subscriptionId },
-        data: {
-          status: 'cancelled',
-          updatedAt: new Date(),
-        },
+        data: { status: 'cancelled', updatedAt: new Date() },
       });
 
-      // 4. Actualizar campo subscription del usuario a false solo si no tiene otras suscripciones activas
       const remainingActiveSubscriptions =
         await this.prismaService.subscription.count({
           where: {
             userId: subscription.userId,
             status: { not: 'cancelled' },
-            id: { not: subscriptionId }, // Excluir la suscripción que acabamos de cancelar
+            id: { not: subscriptionId },
           },
         });
 
@@ -227,10 +178,8 @@ export class CreateSuscriptionsService {
         message: 'Suscripción cancelada exitosamente',
         subscription: updatedSubscription,
       };
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
+    } catch (error: any) {
+      if (error instanceof NotFoundException) throw error;
       throw new Error(
         `Error cancelando suscripción: ${error.response?.data?.description || error.message}`,
       );
@@ -244,19 +193,13 @@ export class CreateSuscriptionsService {
         where: { id: userId },
         include: {
           subscriptions: {
-            include: {
-              plan: true,
-            },
-            orderBy: { createdAt: 'desc' }, // Más recientes primero
+            include: { plan: true },
+            orderBy: { createdAt: 'desc' },
           },
         },
       });
+      if (!user) throw new NotFoundException('Usuario no encontrado');
 
-      if (!user) {
-        throw new NotFoundException('Usuario no encontrado');
-      }
-
-      // Buscar suscripción activa (solo puede haber una)
       const activeSubscription = user.subscriptions.find(
         (sub) => sub.status !== 'cancelled',
       );
@@ -265,12 +208,10 @@ export class CreateSuscriptionsService {
         success: true,
         hasActiveSubscription: !!activeSubscription,
         activeSubscription: activeSubscription || null,
-        subscriptionHistory: user.subscriptions, // Historial completo
+        subscriptionHistory: user.subscriptions,
       };
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
+    } catch (error: any) {
+      if (error instanceof NotFoundException) throw error;
       throw new Error(`Error obteniendo suscripciones: ${error.message}`);
     }
   }

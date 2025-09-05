@@ -7,13 +7,13 @@ import {
   Get,
   ParseIntPipe,
 } from '@nestjs/common';
-import { CreateSuscriptionsService } from './create-suscriptions.service';
+import { CreateSubscriptionsService } from './create-suscriptions.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 
 @Controller('create-suscriptions')
 export class CreateSuscriptionsController {
   constructor(
-    private readonly createSuscriptionsService: CreateSuscriptionsService,
+    private readonly createSuscriptionsService: CreateSubscriptionsService,
   ) {}
 
   @Post()

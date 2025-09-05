@@ -3,8 +3,6 @@ import { PrismaService } from 'src/config/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from 'src/apps/login/dto/login.dto';
-import { permission } from 'process';
-import { write } from 'fs';
 
 @Injectable()
 export class AuthService {
@@ -35,7 +33,23 @@ export class AuthService {
     return null;
   }
 
+  async userAdress(userId: number) {
+    return this.prismaService.address.findMany({
+      where: { userId },
+      select: {
+        id: true, // Aseguramos que devuelva el id
+        // Puedes agregar otros campos si los necesitas en el token
+      },
+    });
+  }
+
   async login(user: any) {
+    // Obtener las direcciones del usuario
+    const addresses = await this.userAdress(user.id);
+
+    // Extraer todos los addressIds
+    const addressIds = addresses.map((address) => address.id);
+
     const payload = {
       id: user.id,
       name: user.name,
@@ -44,6 +58,7 @@ export class AuthService {
       role: 'admin',
       phoneNumber: user.phoneNumber,
       openPayCustomerId: user.openPayCustomerId,
+      addressIds: addressIds, // Array con todos los IDs de direcciones
       permissions: [
         'read',
         'write',
@@ -54,6 +69,7 @@ export class AuthService {
         'view_analytics',
       ],
     };
+
     return {
       access_token: this.jwtService.sign(payload),
     };

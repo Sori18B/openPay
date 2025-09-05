@@ -125,7 +125,7 @@ export class CreateCardsService {
 
           // Campos de dirección (usar datos de la dirección relacionada)
           line1: address.street,
-          line2: address.cologne || '',
+          line2: address.neighborhood || '',
           line3: '',
           city: address.city,
           state: address.state,
@@ -188,7 +188,7 @@ export class CreateCardsService {
               city: true,
               state: true,
               street: true,
-              cologne: true,
+              neighborhood: true,
               postalCode: true,
               countryCode: true,
             },
