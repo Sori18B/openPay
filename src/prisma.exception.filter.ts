@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
-import { PrismaClient, Prisma } from '@prisma/client';
 import { Response } from 'express';
 
 @Catch()

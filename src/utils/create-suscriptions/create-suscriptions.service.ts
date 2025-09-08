@@ -118,8 +118,6 @@ export class CreateSubscriptionsService {
       return {
         success: true,
         message: 'Suscripción creada exitosamente',
-        subscription: savedSubscription,
-        openPayData: openPaySubscription,
       };
     } catch (error: any) {
       if (
@@ -176,7 +174,6 @@ export class CreateSubscriptionsService {
       return {
         success: true,
         message: 'Suscripción cancelada exitosamente',
-        subscription: updatedSubscription,
       };
     } catch (error: any) {
       if (error instanceof NotFoundException) throw error;

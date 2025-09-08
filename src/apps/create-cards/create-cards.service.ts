@@ -155,7 +155,6 @@ export class CreateCardsService {
 
       return {
         message: 'Tarjeta creada correctamente',
-        card: cardDB,
       };
     } catch (error) {
       console.error('Error creando tarjeta:', error);
@@ -205,12 +204,9 @@ export class CreateCardsService {
           brand: card.brand,
           cardNumber: card.cardNumber,
           holderName: card.holderName,
+          bankName: card.bankName,
           expirationYear: card.expirationYear,
           expirationMonth: card.expirationMonth,
-          allowsCharges: card.allowsCharges,
-          creationDate: card.creationDate,
-          bankName: card.bankName,
-          address: card.address,
         })),
       };
     } catch (error) {
