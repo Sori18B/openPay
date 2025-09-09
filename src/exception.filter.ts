@@ -3,74 +3,170 @@ import {
   Catch,
   ArgumentsHost,
   HttpException,
-  HttpStatus,
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { Response, Request } from 'express';
+import { Response } from 'express';
 
 @Catch()
-export class AllExceptionsFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost) {
+export class PrismaClientExceptionFilter implements ExceptionFilter {
+  // Ir agregando más conforme se necesiten xd
+  private readonly commonErrorMap = new Map([
+    // Errores generales contemplados
+    [
+      'P2001',
+      {
+        status: 404,
+        message: 'El elemento que buscas no existe',
+        error: 'Not Found',
+      },
+    ],
+    [
+      'P2002',
+      {
+        status: 409,
+        message: 'Ya existe un registro con esos datos',
+        error: 'Conflict',
+      },
+    ],
+    [
+      'P2003',
+      {
+        status: 400,
+        message:
+          'No se puede realizar la operación porque falta información relacionada',
+        error: 'Bad Request',
+      },
+    ],
+    [
+      'P2011',
+      {
+        status: 400,
+        message: 'Falta información obligatoria',
+        error: 'Bad Request',
+      },
+    ],
+    [
+      'P2025',
+      {
+        status: 404,
+        message:
+          'No se encontró el elemento necesario para completar la operación',
+        error: 'Not Found',
+      },
+    ],
+
+    // Errores de conexión
+    [
+      'P1001',
+      {
+        status: 503,
+        message:
+          'No se puede conectar al servicio. Intenta de nuevo en unos momentos',
+        error: 'Service Unavailable',
+      },
+    ],
+    [
+      'P1002',
+      {
+        status: 408,
+        message: 'La operación está tardando demasiado. Intenta de nuevo',
+        error: 'Request Timeout',
+      },
+    ],
+    // Cuando hagan muchas soluctudes
+    [
+      'P5011',
+      {
+        status: 429,
+        message:
+          'Has realizado demasiadas operaciones. Espera un momento e intenta de nuevo',
+        error: 'Too Many Requests',
+      },
+    ],
+  ]);
+
+  catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
 
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message: string | object = 'Error interno del servidor';
-    let error = 'Internal Server Error';
-
-    // 1. Errores de NestJS (HttpException)
     if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      const res = exception.getResponse();
-
-      // Puede ser string o un objeto dependiendo de cómo se lanzó
-      if (typeof res === 'string') {
-        message = res;
-      } else if (typeof res === 'object') {
-        message = (res as any).message || res;
-        error = (res as any).error || error;
-      }
+      return response
+        .status(exception.getStatus())
+        .json(exception.getResponse());
     }
 
-    // 2. Errores de Prisma
-    else if (exception instanceof PrismaClientKnownRequestError) {
-      switch (exception.code) {
-        case 'P2002': // unique constraint violation
-          status = HttpStatus.CONFLICT;
-          message = `Valor duplicado en: ${exception.meta?.target}`;
-          error = 'Conflict';
-          break;
-
-        case 'P2001': // record not found
-          status = HttpStatus.NOT_FOUND;
-          message = 'Registro no encontrado';
-          error = 'Not Found';
-          break;
-
-        case 'P2000': // valor inválido en campo
-          status = HttpStatus.BAD_REQUEST;
-          message = 'Valor inválido para algún campo';
-          error = 'Bad Request';
-          break;
-
-        default:
-          status = HttpStatus.BAD_REQUEST;
-          message = `Error de Prisma: ${exception.message}`;
-          error = 'Database Error';
-          break;
+    if (exception instanceof PrismaClientKnownRequestError) {
+      const commonError = this.commonErrorMap.get(exception.code);
+      if (commonError) {
+        return response.status(commonError.status).json({
+          statusCode: commonError.status,
+          message: this.enhanceErrorMessage(commonError.message, exception),
+          error: commonError.error,
+          code: exception.code,
+        });
       }
-    } else if (exception instanceof Error) {
-      message = exception.message;
+
+      // Para todos los demás errores: respuesta genérica
+      return response.status(400).json({
+        statusCode: 400,
+        message:
+          'Ocurrió un problema al procesar tu solicitud. Verifica los datos e intenta de nuevo',
+        error: 'Database Error',
+        code: exception.code,
+        // En desarrollo, incluir detalles adicionales
+        ...(process.env.NODE_ENV === 'development' && {
+          details: exception.meta,
+          originalMessage: exception.message,
+          cause: exception.cause,
+        }),
+      });
     }
 
-    response.status(status).json({
-      success: false,
-      statusCode: status,
-      message,
-      error,
-      path: request.url,
-      timestamp: new Date().toISOString(),
+    // Fallback para otros errores
+    return response.status(500).json({
+      statusCode: 500,
+      message:
+        'Algo salió mal en nuestro servidor. Estamos trabajando para solucionarlo. Por favor, intenta de nuevo en unos minutos',
+      error: 'Internal Server Error',
+      // Solo en desarrollo mostrar detalles
+      ...(process.env.NODE_ENV === 'development' && {
+        debugInfo: {
+          errorType: exception?.constructor?.name || 'Unknown',
+          errorMessage: exception?.message || 'No message available',
+          stack: exception?.stack,
+          nodeEnv: process.env.NODE_ENV,
+        },
+      }),
     });
+  }
+
+  /**
+   * Mejora el mensaje de error con información específica del contexto
+   * Solo para los errores más comunes que necesitan detalles adicionales
+   */
+  private enhanceErrorMessage(
+    baseMessage: string,
+    exception: PrismaClientKnownRequestError,
+  ): string {
+    switch (exception.code) {
+      case 'P2002':
+        // Para duplicados, mostrar qué campo específico ya existe
+        const field = exception.meta?.target;
+        if (field) {
+          return `${baseMessage}. El campo "${field}" ya está en uso`;
+        }
+        return `${baseMessage}. Verifica que la información no esté duplicada`;
+
+      case 'P2003':
+        // Para relaciones, ser más específico
+        const fieldName = exception.meta?.field_name;
+        if (fieldName) {
+          return `${baseMessage}. Verifica el campo "${fieldName}"`;
+        }
+        return `${baseMessage}. Verifica que todos los datos relacionados existan`;
+
+      default:
+        return baseMessage;
+    }
   }
 }
